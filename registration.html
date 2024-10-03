@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register / Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin-top: 10px; }
+        input { margin-top: 5px; padding: 8px; width: 300px; }
+        button { margin-top: 10px; padding: 10px 15px; }
+        #verification-form { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Register / Login</h1>
+
+    <!-- Registration Form -->
+    <div id="registration-container">
+        <form id="registration-form">
+            <h2>Register</h2>
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+
+            <label for="phone">Phone Number:</label>
+            <input type="text" id="phone" required>
+
+            <button type="submit">Send Verification Code</button>
+        </form>
+    </div>
+
+    <!-- Verification Form -->
+    <div id="verification-container">
+        <form id="verification-form">
+            <h2>Verify Phone Number</h2>
+            <label for="code">Verification Code:</label>
+            <input type="text" id="code" required>
+            <button type="submit">Verify Code</button>
+        </form>
+    </div>
+
+    <!-- Message Display -->
+    <div id="message"></div>
+
+    <!-- Google Login -->
+    <div>
+        <h2>Or</h2>
+        <a href="/auth/google"><button>Login with Google</button></a>
+    </div>
+
+    <script>
+        const registrationForm = document.getElementById('registration-form');
+        const verificationForm = document.getElementById('verification-form');
+        const messageDiv = document.getElementById('message');
+        let verificationCode;
+
+        registrationForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const phone = document.getElementById('phone').value;
+
+            const response = await fetch('/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, phone })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                verificationCode = result.code;  // Save the verification code
+                registrationForm.style.display = 'none';
+                verificationForm.style.display = 'block';
+                messageDiv.innerText = 'Verification code sent to your phone.';
+            } else {
+                messageDiv.innerText = result.message;
+            }
+        };
+
+        verificationForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const codeInput = document.getElementById('code').value;
+
+            const response = await fetch('/auth/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: codeInput })
+            });
+
+            const result = await response.json();
+            messageDiv.innerText = result.message;
+
+            if (result.success) {
+                // Optionally, redirect to a welcome page or dashboard
+                window.location.href = '/welcome'; // Adjust this path as necessary
+            }
+        };
+    </script>
+</body>
+</html>
